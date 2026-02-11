@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PhysicsAI | Problem Visualizer &amp; Insights</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1392ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101a22",
+                        "accent-cyan": "#22d3ee",
+                        "panel-dark": "#16252f",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            scrollbar-width: thin;
+            scrollbar-color: #1392ec #101a22;
+        }
+        .physics-grid {
+            background-image: radial-gradient(rgba(19, 146, 236, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .math-font {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display">
+<!-- Header Navigation -->
+<header class="border-b border-slate-200 dark:border-white/10 bg-white/50 dark:bg-background-dark/50 backdrop-blur-md sticky top-0 z-50">
+<div class="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">blur_on</span>
+</div>
+<span class="text-xl font-bold tracking-tight">Physics<span class="text-primary">AI</span></span>
+</div>
+<nav class="hidden md:flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+<span>Projects</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-slate-900 dark:text-white font-medium">Projectile Motion 101</span>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-white/5 hover:bg-white/10 transition-all text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">share</span>
+                    Share
+                </button>
+<button class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 transition-all text-white text-sm font-medium">
+                    Export Data
+                </button>
+</div>
+</div>
+</header>
+<main class="flex-1 flex max-w-[1600px] mx-auto w-full p-6 gap-6">
+<!-- Left Section: Simulation & Reasoning -->
+<div class="flex-1 flex flex-col gap-6 overflow-hidden">
+<!-- Simulation Canvas -->
+<section class="relative bg-panel-dark rounded-xl border border-white/5 overflow-hidden shadow-2xl flex-1 min-h-[400px]">
+<div class="absolute inset-0 physics-grid pointer-events-none"></div>
+<!-- Visualization Layer -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="relative w-full h-full flex flex-col items-center justify-center">
+<!-- Parabolic Path Simulation Placeholder -->
+<div class="relative w-3/4 h-64 border-b-2 border-slate-600">
+<svg class="w-full h-full overflow-visible" viewbox="0 0 800 300">
+<path d="M 50 250 Q 400 -50 750 250" fill="none" stroke="#1392ec" stroke-dasharray="10 5" stroke-width="3"></path>
+<circle class="shadow-lg shadow-cyan-500/50" cx="50" cy="250" fill="#22d3ee" r="10"></circle>
+<circle class="opacity-30" cx="750" cy="250" fill="#22d3ee" r="10"></circle>
+<!-- Velocity Vector -->
+<line stroke="#22d3ee" stroke-width="2" x1="50" x2="120" y1="250" y2="180"></line>
+<polygon fill="#22d3ee" points="120,180 115,188 122,185"></polygon>
+</svg>
+<!-- Measurement Overlays -->
+<div class="absolute top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-white/10 px-3 py-1 rounded-full text-xs">
+<span class="text-accent-cyan font-bold">Max Height:</span>
+<span class="text-white">45.2m</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Simulation Controls Overlay -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-md border border-white/10 p-2 rounded-full flex items-center gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">restart_alt</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-white">play_arrow</span>
+</button>
+<div class="h-6 w-[1px] bg-white/10"></div>
+<div class="flex items-center gap-2 px-4">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Speed</span>
+<span class="text-sm font-medium text-white">1.0x</span>
+</div>
+</div>
+<!-- Labels -->
+<div class="absolute top-6 left-6 flex flex-col gap-2">
+<span class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-primary/30">Live Visualization</span>
+<h2 class="text-xl font-bold text-white">Projectile Motion</h2>
+</div>
+</section>
+<!-- AI Reasoning Dashboard -->
+<section class="bg-white dark:bg-panel-dark rounded-xl border border-slate-200 dark:border-white/5 p-6 shadow-xl">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">psychology</span>
+</div>
+<div>
+<h3 class="font-bold text-lg">AI Reasoning Engine</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-tighter">Analytical breakdown of the simulation</p>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="bg-accent-cyan/10 text-accent-cyan text-xs font-semibold px-3 py-1 rounded-full border border-accent-cyan/20">Motion Type: Kinematics</span>
+<span class="bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full border border-primary/20">2D Analysis</span>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Formulas -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm">functions</span>
+                            Equations Used
+                        </div>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-slate-50 dark:bg-white/5 p-4 rounded-lg border border-slate-200 dark:border-white/5">
+<p class="text-[10px] text-slate-500 mb-1">Vertical Displacement</p>
+<p class="math-font text-xl text-primary font-serif">y = v₀y·t - ½gt²</p>
+</div>
+<div class="bg-slate-50 dark:bg-white/5 p-4 rounded-lg border border-slate-200 dark:border-white/5">
+<p class="text-[10px] text-slate-500 mb-1">Horizontal Range</p>
+<p class="math-font text-xl text-primary font-serif">R = (v₀² sin 2θ) / g</p>
+</div>
+</div>
+</div>
+<!-- Steps -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm">list_alt</span>
+                            Logical Derivation
+                        </div>
+<div class="space-y-3">
+<div class="flex gap-4">
+<span class="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0">1</span>
+<p class="text-sm text-slate-600 dark:text-slate-300">The AI resolved the initial velocity vector (<span class="math-font text-primary">v₀ = 50 m/s</span>) into its vertical and horizontal components based on the 45° launch angle.</p>
+</div>
+<div class="flex gap-4">
+<span class="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0">2</span>
+<p class="text-sm text-slate-600 dark:text-slate-300">Calculation of total flight time by solving for <span class="math-font text-primary">y = 0</span>, identifying the peak of the trajectory at <span class="math-font text-primary">t = 3.61s</span>.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Section: "What-If" AI Chat -->
+<aside class="w-96 flex flex-col gap-6 h-[calc(100vh-140px)] sticky top-24">
+<div class="bg-white dark:bg-panel-dark rounded-xl border border-slate-200 dark:border-white/5 flex flex-col h-full shadow-xl overflow-hidden">
+<!-- Chat Header -->
+<div class="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent-cyan flex items-center justify-center">
+<span class="material-symbols-outlined text-white">auto_awesome</span>
+</div>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-panel-dark rounded-full"></div>
+</div>
+<div>
+<h3 class="font-bold text-sm">"What-If" Assistant</h3>
+<p class="text-[10px] text-green-500 font-medium">Online &amp; Ready</p>
+</div>
+</div>
+</div>
+<!-- Chat Body -->
+<div class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- System Message -->
+<div class="flex flex-col gap-2">
+<div class="bg-slate-100 dark:bg-white/5 p-3 rounded-lg rounded-tl-none text-sm text-slate-700 dark:text-slate-300">
+                            Hello! I can modify the physical environment in real-time. Try asking "What if gravity was lower?" or "Double the initial velocity."
+                        </div>
+</div>
+<!-- User Message -->
+<div class="flex flex-col gap-2 items-end">
+<div class="bg-primary text-white p-3 rounded-lg rounded-tr-none text-sm shadow-lg shadow-primary/20">
+                            What if gravity was 3 m/s²?
+                        </div>
+</div>
+<!-- AI Preview Card Interaction -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xs">auto_awesome</span>
+</div>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Environment Preview</span>
+</div>
+<div class="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-sm font-medium">Gravity Constant</span>
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-400 line-through">9.81</span>
+<span class="material-symbols-outlined text-xs text-primary">arrow_forward</span>
+<span class="text-sm font-bold text-primary">3.00 m/s²</span>
+</div>
+</div>
+<div class="p-3 bg-panel-dark/50 rounded-lg border border-white/5">
+<p class="text-xs text-slate-400 leading-relaxed">
+<span class="text-accent-cyan font-bold">Predicted Impact:</span> Time-of-flight will increase by 227%. The trajectory will be significantly more elongated.
+                                </p>
+</div>
+<button class="w-full py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 transition-all">
+                                APPLY CHANGES
+                            </button>
+</div>
+</div>
+<div class="bg-slate-100 dark:bg-white/5 p-3 rounded-lg rounded-tl-none text-sm text-slate-700 dark:text-slate-300">
+                        Environment adjusted. The simulation has been updated to reflect Martian-like gravity conditions.
+                    </div>
+</div>
+<!-- Chat Input -->
+<div class="p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+<div class="relative">
+<input class="w-full bg-white dark:bg-background-dark border border-slate-300 dark:border-white/10 rounded-lg pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Type a scenario..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary rounded-md flex items-center justify-center text-white hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Stats Card -->
+<div class="bg-gradient-to-br from-primary/10 to-accent-cyan/10 rounded-xl border border-primary/20 p-4">
+<h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-3">Live Parameters</h4>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<p class="text-[10px] text-slate-500 uppercase">Velocity</p>
+<p class="text-lg font-bold">50.0 <span class="text-xs font-normal">m/s</span></p>
+</div>
+<div>
+<p class="text-[10px] text-slate-500 uppercase">Gravity</p>
+<p class="text-lg font-bold text-primary">3.0 <span class="text-xs font-normal">m/s²</span></p>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<!-- Visual Background Element (Abstract) -->
+<div class="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full"></div>
+<div class="fixed bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-accent-cyan/5 blur-[100px] rounded-full"></div>
+</body></html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PhysicsAI - Interactive Simulations</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1392ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#0a0f14",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .grid-pattern {
+            background-image: 
+                linear-gradient(to right, rgba(19, 146, 236, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(19, 146, 236, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .glow-effect {
+            box-shadow: 0 0 25px -5px rgba(19, 146, 236, 0.4);
+        }
+        .glass-card {
+            background: rgba(16, 26, 34, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+<!-- Navigation -->
+<nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-icons text-white text-xl">insights</span>
+</div>
+<span class="text-xl font-bold tracking-tight">PhysicsAI</span>
+</div>
+<div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+<a class="hover:text-primary transition-colors" href="#">Showcase</a>
+<a class="hover:text-primary transition-colors" href="#">Documentation</a>
+<a class="hover:text-primary transition-colors" href="#">Pricing</a>
+<a class="hover:text-primary transition-colors" href="#">API</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-sm font-medium hover:text-primary transition-colors">Log in</button>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+                    Sign Up
+                </button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<main class="relative min-h-screen flex flex-col items-center justify-center pt-20 px-4">
+<!-- Background Elements -->
+<div class="absolute inset-0 grid-pattern pointer-events-none"></div>
+<div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="absolute bottom-0 inset-x-0 h-64 bg-gradient-to-t from-background-dark to-transparent"></div>
+<!-- Content Container -->
+<div class="relative z-10 max-w-4xl w-full text-center">
+<!-- Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-8 uppercase tracking-widest">
+<span class="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                Next-Gen Physics Engine
+            </div>
+<!-- Headline -->
+<h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent leading-tight">
+                Turn Physics Problems into <br/> <span class="text-primary">Interactive Simulations</span>
+</h1>
+<!-- Subheadline -->
+<p class="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+                Paste your complex word problems and watch PhysicsAI build real-time, mathematically accurate 3D visualizations in seconds.
+            </p>
+<!-- Main Input Area -->
+<div class="glass-card rounded-xl p-2 max-w-3xl mx-auto shadow-2xl">
+<div class="relative group">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-lg p-6 min-h-[160px] resize-none text-white placeholder-slate-500 font-light" placeholder="A 5kg block slides down a 30-degree incline with a friction coefficient of 0.2..."></textarea>
+<div class="flex flex-col md:flex-row items-center justify-between p-4 gap-4 border-t border-white/5">
+<!-- Examples -->
+<div class="flex flex-wrap justify-center gap-2">
+<span class="text-xs text-slate-500 font-medium uppercase tracking-wider mr-2 self-center">Try:</span>
+<button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-300 border border-white/5 transition-colors">
+                                Projectile Motion
+                            </button>
+<button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-300 border border-white/5 transition-colors">
+                                Pendulum Waves
+                            </button>
+<button class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-300 border border-white/5 transition-colors">
+                                Electromagnetism
+                            </button>
+</div>
+<!-- CTA Button -->
+<button class="w-full md:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-bold transition-all glow-effect">
+<span class="material-icons text-xl">auto_fix_high</span>
+                            Visualize
+                        </button>
+</div>
+</div>
+</div>
+<!-- Dashboard Preview / Decorative -->
+<div class="mt-20 relative group">
+<div class="absolute inset-0 bg-primary/20 blur-[80px] rounded-full scale-90 group-hover:scale-100 transition-transform duration-700"></div>
+<div class="relative glass-card rounded-xl p-1 border-white/10 overflow-hidden">
+<img alt="AI Generated Physics Simulation Interface" class="w-full h-auto rounded-lg opacity-80 group-hover:opacity-100 transition-opacity duration-500" data-alt="Modern 3D physics simulation showing complex particle trajectories and mathematical data" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx042gVYkI9Lz18csd8UA4LVz_VbXviB1GdrXRT6PN3UVj6B1CZiJY_NQ6QWgbbnhf5QsLzukAC7cHJL_-t-2obz7-TPRXCKMQ9-3gceKCxP_lxvtvbCxlbZaNhPImgbFpwEDUyHASZ9c-H5qUrOdecdCqAsfeTTMw08ivZN_f_tq9iiLXW19Y1lh1BQAKD_DvH3Ko46Zz8ncEK2Z9yUcNr6ZSge3ZYNSDVrZZuDeZ_DqOpti7H-vpnTu6oDSE8F8Z6Wq6PLHLXIM-"/>
+<!-- Floating UI elements -->
+<div class="absolute top-8 left-8 p-4 glass-card rounded-lg border-primary/30 flex items-center gap-3">
+<div class="p-2 bg-primary/20 rounded-lg">
+<span class="material-icons text-primary">analytics</span>
+</div>
+<div class="text-left">
+<div class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter leading-none">Velocity Vector</div>
+<div class="text-sm font-bold text-white">9.81 m/s²</div>
+</div>
+</div>
+<div class="absolute bottom-8 right-8 p-4 glass-card rounded-lg border-primary/30 flex items-center gap-3">
+<div class="p-2 bg-green-500/20 rounded-lg">
+<span class="material-icons text-green-400">check_circle</span>
+</div>
+<div class="text-left">
+<div class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter leading-none">Simulation State</div>
+<div class="text-sm font-bold text-white">Verified Accurate</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Trust / Social Proof -->
+<div class="mt-24 pb-20">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-8">Trusted by researchers at</p>
+<div class="flex flex-wrap justify-center items-center gap-12 opacity-40 grayscale contrast-125">
+<span class="text-xl font-bold italic tracking-tighter">MIT Lab</span>
+<span class="text-xl font-bold tracking-widest">CERN</span>
+<span class="text-xl font-black uppercase">Stanford</span>
+<span class="text-xl font-serif italic">Oxford</span>
+<span class="text-xl font-bold flex items-center gap-1"><span class="material-icons text-sm">science</span> Caltech</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Light Overlay -->
+<div class="fixed bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+</body></html>

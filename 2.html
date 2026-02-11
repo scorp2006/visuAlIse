@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PhysicsAI | Simulation Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1392ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #101a22;
+        }
+        .glass {
+            background: rgba(19, 146, 236, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(19, 146, 236, 0.2);
+        }
+        .simulation-grid {
+            background-image: radial-gradient(circle, rgba(19, 146, 236, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .glow-primary {
+            box-shadow: 0 0 15px rgba(19, 146, 236, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display">
+<!-- Header -->
+<header class="h-16 glass border-b border-primary/20 px-6 flex items-center justify-between z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center glow-primary">
+<span class="material-icons text-white">science</span>
+</div>
+<div>
+<h1 class="font-bold text-xl tracking-tight">Physics<span class="text-primary">AI</span></h1>
+<p class="text-[10px] uppercase tracking-widest text-primary/60 font-medium">Digital Laboratory v2.4</p>
+</div>
+</div>
+<div class="flex-1 max-w-2xl px-12">
+<div class="relative group">
+<span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-primary/50 group-focus-within:text-primary transition-colors">auto_fix_high</span>
+<input class="w-full bg-primary/10 border-primary/20 rounded-full py-2.5 pl-12 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent text-sm placeholder-primary/30 outline-none" placeholder="Describe a physics problem..." type="text" value="Projectile motion of a 2kg sphere at 45 degrees"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors">
+<span class="material-icons">notifications</span>
+</button>
+<div class="h-8 w-[1px] bg-primary/20 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-xs font-semibold">Dr. Julian Voss</p>
+<p class="text-[10px] text-primary/60">Lead Researcher</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 p-0.5">
+<img alt="Profile" class="rounded-full w-full h-full object-cover" data-alt="Portrait of a scientist wearing glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZMUMRwoGGArcsOleTPwkocafCMNM64CCAi4KImS9GP34qv-5E9qaSrYTxWF---TchQmOZx-1nW7iu1gOAc6yX9pV7HGW6s7pC-csQ-jhe8S_2CrbD1Bl086Qblw21hsisDI2j_qok-yAI5julWV-0n7nhvCsPGjk8Yw84vJlqJZu2mXpTSCBcPmNaF7BL-Dp1M8eRlnAZu717EDL6I4fMJxRcBV-K4tGXfLRgnxWTsIBERG9Oq9xwmzBVqH1opvUou0JM5ihXdjK0"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex overflow-hidden">
+<!-- Left Sidebar: Control Panel -->
+<aside class="w-80 glass border-r border-primary/10 p-6 flex flex-col gap-6 overflow-y-auto">
+<div class="flex items-center justify-between">
+<h2 class="font-bold text-sm uppercase tracking-widest text-primary">Parameters</h2>
+<button class="text-primary/60 hover:text-primary transition-colors">
+<span class="material-icons text-lg">restart_alt</span>
+</button>
+</div>
+<!-- Control Cards -->
+<div class="space-y-6">
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<label class="text-xs font-medium text-slate-400">Gravity (g)</label>
+<span class="text-primary font-bold">9.81 <span class="text-[10px] font-normal text-slate-500">m/s²</span></span>
+</div>
+<input class="w-full h-1.5 bg-primary/20 rounded-full appearance-none cursor-pointer accent-primary" max="25" min="0" step="0.1" type="range" value="9.8"/>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<label class="text-xs font-medium text-slate-400">Initial Velocity (v₀)</label>
+<span class="text-primary font-bold">24.5 <span class="text-[10px] font-normal text-slate-500">m/s</span></span>
+</div>
+<input class="w-full h-1.5 bg-primary/20 rounded-full appearance-none cursor-pointer accent-primary" max="100" min="0" step="1" type="range" value="24"/>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<label class="text-xs font-medium text-slate-400">Launch Angle (θ)</label>
+<span class="text-primary font-bold">45.0 <span class="text-[10px] font-normal text-slate-500">deg</span></span>
+</div>
+<input class="w-full h-1.5 bg-primary/20 rounded-full appearance-none cursor-pointer accent-primary" max="90" min="0" step="1" type="range" value="45"/>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<label class="text-xs font-medium text-slate-400">Object Mass (m)</label>
+<span class="text-primary font-bold">2.00 <span class="text-[10px] font-normal text-slate-500">kg</span></span>
+</div>
+<input class="w-full h-1.5 bg-primary/20 rounded-full appearance-none cursor-pointer accent-primary" max="10" min="0.1" step="0.1" type="range" value="2"/>
+</div>
+</div>
+<div class="mt-auto pt-6 border-t border-primary/10">
+<div class="p-4 rounded-lg bg-primary/5 border border-primary/20">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-icons text-primary text-sm">info</span>
+<span class="text-[10px] uppercase font-bold tracking-wider text-primary">Environment</span>
+</div>
+<p class="text-xs text-slate-400 leading-relaxed italic">
+                        "Air resistance is currently disabled. Calculations assume a perfect vacuum environment."
+                    </p>
+</div>
+</div>
+</aside>
+<!-- Center: Simulation Canvas -->
+<section class="flex-1 relative bg-background-dark overflow-hidden flex flex-col p-6">
+<div class="flex-1 relative rounded-xl border border-primary/20 overflow-hidden simulation-grid bg-[#0a1117]">
+<!-- Simulation HUD Overlays -->
+<div class="absolute top-6 left-6 flex gap-6">
+<div class="glass px-4 py-2 rounded-lg">
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Current Time</p>
+<p class="text-2xl font-bold text-primary">1.42s</p>
+</div>
+<div class="glass px-4 py-2 rounded-lg">
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Height (Y)</p>
+<p class="text-2xl font-bold text-white">12.84m</p>
+</div>
+</div>
+<!-- Simulation Rendering Area (Visual Representation) -->
+<div class="absolute inset-0 flex items-end justify-start p-12 pointer-events-none">
+<svg class="w-full h-full" viewbox="0 0 800 400">
+<!-- Trajectory Path -->
+<path d="M 50 350 Q 250 50 450 350" fill="none" opacity="0.4" stroke="#1392ec" stroke-dasharray="8,4" stroke-width="2"></path>
+<!-- Current Position & Vectors -->
+<g transform="translate(250, 50)">
+<!-- Velocity Vector -->
+<line stroke="#1392ec" stroke-width="3" x1="0" x2="60" y1="0" y2="0"></line>
+<path d="M 60 -5 L 70 0 L 60 5 Z" fill="#1392ec"></path>
+<text class="text-[10px] font-bold" fill="#1392ec" x="75" y="5">V₀</text>
+<!-- Gravity Vector -->
+<line stroke="#ef4444" stroke-width="2" x1="0" x2="0" y1="0" y2="40"></line>
+<path d="M -4 40 L 0 48 L 4 40 Z" fill="#ef4444"></path>
+<text class="text-[10px] font-bold" fill="#ef4444" x="5" y="55">g</text>
+<!-- The Projectile -->
+<circle class="glow-primary" cx="0" cy="0" fill="#1392ec" r="10"></circle>
+</g>
+<!-- Ground -->
+<line stroke="rgba(19, 146, 236, 0.3)" stroke-width="1" x1="0" x2="800" y1="350" y2="350"></line>
+</svg>
+</div>
+<!-- Canvas Transport Controls -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 glass px-6 py-3 rounded-full glow-primary">
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-icons">skip_previous</span>
+</button>
+<button class="w-10 h-10 bg-primary rounded-full flex items-center justify-center hover:scale-105 transition-transform">
+<span class="material-icons text-white">pause</span>
+</button>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-icons">skip_next</span>
+</button>
+<div class="w-[1px] h-6 bg-primary/20 mx-2"></div>
+<button class="flex items-center gap-2 text-xs font-bold text-primary px-3 py-1 rounded-full bg-primary/10">
+<span class="material-icons text-sm">videocam</span>
+                        RECORD
+                    </button>
+</div>
+</div>
+<!-- Bottom Data Ticker -->
+<div class="mt-4 flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+<div class="flex-shrink-0 flex items-center gap-3 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
+<span class="text-[10px] font-bold text-slate-500 uppercase">Max Height</span>
+<span class="text-sm font-mono text-primary">15.24m</span>
+</div>
+<div class="flex-shrink-0 flex items-center gap-3 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
+<span class="text-[10px] font-bold text-slate-500 uppercase">Range</span>
+<span class="text-sm font-mono text-primary">42.88m</span>
+</div>
+<div class="flex-shrink-0 flex items-center gap-3 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
+<span class="text-[10px] font-bold text-slate-500 uppercase">Flight Time</span>
+<span class="text-sm font-mono text-primary">3.52s</span>
+</div>
+<div class="flex-shrink-0 flex items-center gap-3 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10">
+<span class="text-[10px] font-bold text-slate-500 uppercase">Impact V</span>
+<span class="text-sm font-mono text-primary">24.5m/s</span>
+</div>
+</div>
+</section>
+<!-- Right Sidebar: Learning Insights -->
+<aside class="w-96 glass border-l border-primary/10 p-6 flex flex-col gap-6 overflow-y-auto">
+<!-- Energy Bar Chart -->
+<div class="glass p-4 rounded-xl border border-primary/10">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">Energy Distribution (J)</h3>
+<div class="flex h-48 gap-8 items-end justify-center px-4">
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary/20 rounded-t-lg relative" style="height: 65%;">
+<div class="absolute inset-0 bg-primary opacity-60 rounded-t-lg"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-500">KINETIC</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-white/5 rounded-t-lg relative" style="height: 35%;">
+<div class="absolute inset-0 bg-white opacity-40 rounded-t-lg"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-500">POTENTIAL</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary/10 rounded-t-lg border border-dashed border-primary/40 h-full"></div>
+<span class="text-[10px] font-bold text-slate-500">TOTAL</span>
+</div>
+</div>
+</div>
+<!-- Height vs Time Graph -->
+<div class="glass p-4 rounded-xl border border-primary/10">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Height vs Time</h3>
+<span class="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded">Real-time</span>
+</div>
+<div class="h-32 w-full relative">
+<svg class="w-full h-full" viewbox="0 0 200 100">
+<path d="M 0 100 Q 100 0 200 100" fill="none" stroke="#1392ec" stroke-width="2"></path>
+<circle cx="120" cy="25" fill="#1392ec" r="3"></circle>
+<!-- Grid Lines -->
+<line stroke="rgba(255,255,255,0.05)" stroke-width="1" x1="0" x2="0" y1="0" y2="100"></line>
+<line stroke="rgba(255,255,255,0.05)" stroke-width="1" x1="0" x2="200" y1="100" y2="100"></line>
+</svg>
+</div>
+</div>
+<!-- AI Insights Card -->
+<div class="mt-auto glass p-5 rounded-xl border border-primary/20 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+<span class="material-icons text-primary text-xl">psychology</span>
+</div>
+<h3 class="text-xs font-bold uppercase tracking-widest text-primary mb-3">AI Analysis</h3>
+<p class="text-sm text-slate-300 leading-relaxed">
+                    At this point in the trajectory (<span class="text-primary font-mono">t=1.42s</span>), the vertical velocity has decreased significantly due to gravity. 
+                    <span class="text-primary/80">Kinetic energy</span> is being converted into <span class="text-white">Gravitational Potential Energy</span> as the object approaches its apex.
+                </p>
+<div class="mt-4 flex gap-2">
+<button class="text-[10px] font-bold bg-primary text-white px-3 py-1.5 rounded uppercase glow-primary">Export Data</button>
+<button class="text-[10px] font-bold bg-white/5 text-slate-400 px-3 py-1.5 rounded uppercase hover:bg-white/10 transition-colors">Compare</button>
+</div>
+</div>
+</aside>
+</main>
+<!-- Global State Footer -->
+<footer class="h-10 glass border-t border-primary/10 px-6 flex items-center justify-between text-[10px] text-slate-500 uppercase font-bold tracking-[0.2em]">
+<div class="flex items-center gap-6">
+<span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Engine Ready</span>
+<span class="flex items-center gap-2 text-primary"><span class="material-icons text-[12px]">cpu</span> GPU Accelerated</span>
+</div>
+<div class="flex items-center gap-6">
+<span>Coordinate System: Cartesian</span>
+<span>Scale: 1:10px/m</span>
+</div>
+</footer>
+</body></html>
