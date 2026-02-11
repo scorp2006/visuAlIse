@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// API calls use relative /api paths — proxied by Next.js rewrites to backend
 
 interface ParamVal { value: number; unit: string; symbol: string; }
 interface PhysicsData {
@@ -90,7 +90,7 @@ function SimulatePage() {
       if (e.data?.type === "p5error" && p5Code && !fixing) {
         setFixing(true);
         try {
-          const res = await fetch(`${API}/api/fix-p5js`, {
+          const res = await fetch(`/api/fix-p5js`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code: p5Code, error: e.data.error, code_type: "p5js" }),
@@ -112,7 +112,7 @@ function SimulatePage() {
     setVideoStatus("pending");
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`${API}/api/video/${jobId}`);
+        const res = await fetch(`/api/video/${jobId}`);
         if (!res.ok) return;
         const json = await res.json();
         if (json.status === "done") {
@@ -139,7 +139,7 @@ function SimulatePage() {
     setVideoError("");
     if (pollRef.current) clearInterval(pollRef.current);
     try {
-      const res = await fetch(`${API}/api/simulate`, {
+      const res = await fetch(`/api/simulate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q }),

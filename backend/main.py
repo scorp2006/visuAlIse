@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
-import json, os, uuid
+import json, os, uuid, traceback
 from dotenv import load_dotenv
 from prompt import SYSTEM_PROMPT, build_user_prompt, build_p5js_fix_prompt, build_manim_fix_prompt
 from manim_runner import render_manim
@@ -19,6 +19,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    tb = traceback.format_exc()
+    return JSONResponse(
+        status_code=500,
+        headers={"Access-Control-Allow-Origin": "*"},
+        content={"detail": str(exc), "type": type(exc).__name__, "trace": tb[-800:]},
+    )
+
 
 # In-memory job store  { job_id: {"status": "pending"|"done"|"error", "url": "...", "error": "..."} }
 jobs: dict = {}
@@ -185,4 +197,10 @@ async def fix_p5js(req: FixRequest):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "model": "llama-3.3-70b-versatile"}
+    api_key = os.getenv("GROQ_API_KEY")
+    return {
+        "status": "ok",
+        "model": "llama-3.3-70b-versatile",
+        "groq_key_set": bool(api_key),
+        "groq_key_prefix": (api_key[:8] + "...") if api_key else None,
+    }
