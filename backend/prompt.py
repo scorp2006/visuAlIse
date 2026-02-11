@@ -125,8 +125,7 @@ MANIM ANIMATION RULES (MUST FOLLOW EXACTLY)
 - Total animation: 20-40 seconds
 
 MANIM OBJECTS TO USE:
-  Text("string", font_size=32, color=WHITE)  — for labels
-  MathTex(r"equation", color=WHITE)  — for math equations
+  Text("string", font_size=32, color=WHITE)  — for ALL text including equations
   Arrow(start, end, color=WHITE)  — for vectors
   Line(start, end, color=WHITE)  — for lines
   Dot(point, color=WHITE)  — for point objects
@@ -175,7 +174,7 @@ MANIM STRUCTURE (follow this pattern):
 MANIM MISTAKES TO AVOID:
 - Never use deprecated: ShowCreation (use Create), GrowArrow (use Create)
 - Never import specific items — always use: from manim import *
-- Don\'t use complex LaTeX that might fail — keep MathTex simple
+- NEVER use MathTex or Tex — use Text() for all text including equations (LaTeX not available)
 - Use np.array([x, y, 0]) for custom positions (import numpy as np)
 - Always add self.wait() between major animation steps
 - ValueTracker for animated values: t = ValueTracker(0)

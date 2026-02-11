@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Install system dependencies for Manim
+# System deps for Manim (Text rendering via Pango + Cairo, video via ffmpeg)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     libcairo2-dev \
@@ -8,15 +8,17 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     python3-dev \
     build-essential \
+    fonts-noto \
+    fonts-noto-cjk \
+    fontconfig \
+    && fc-cache -fv \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Python dependencies
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
 COPY backend/ .
 
 EXPOSE 8000

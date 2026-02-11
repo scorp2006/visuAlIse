@@ -147,6 +147,7 @@ async def simulate(req: PhysicsRequest, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=f"LLM missing fields: {missing}")
 
     job_id = str(uuid.uuid4())
+    jobs[job_id] = {"status": "pending"}  # pre-register so polling never gets 404
     background_tasks.add_task(run_manim_job, job_id, data["manim_code"], req.question)
 
     return PhysicsResponse(**data, job_id=job_id)
