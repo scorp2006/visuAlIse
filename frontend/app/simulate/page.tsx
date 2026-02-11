@@ -61,14 +61,15 @@ function SimulatePage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"explanation" | "equations" | "results">("explanation");
-  const [iframeSrc, setIframeSrc] = useState("");
+  const [iframeDoc, setIframeDoc] = useState("");
+  const [simKey, setSimKey] = useState(0);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoStatus, setVideoStatus] = useState<"pending" | "done" | "error" | null>(null);
+  const [videoError, setVideoError] = useState<string>("");
   const [activeView, setActiveView] = useState<"sim" | "video">("sim");
   const [p5Code, setP5Code] = useState("");
   const [fixing, setFixing] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
-  const blobRef = useRef<string>("");
 
   useEffect(() => {
     if (!question) { router.push("/"); return; }
@@ -78,12 +79,8 @@ function SimulatePage() {
 
   useEffect(() => {
     if (p5Code) {
-      if (blobRef.current) URL.revokeObjectURL(blobRef.current);
-      const html = buildIframeHTML(p5Code);
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      blobRef.current = url;
-      setIframeSrc(url);
+      setIframeDoc(buildIframeHTML(p5Code));
+      setSimKey(k => k + 1);
     }
   }, [p5Code]);
 
@@ -124,6 +121,7 @@ function SimulatePage() {
           if (pollRef.current) clearInterval(pollRef.current);
         } else if (json.status === "error") {
           setVideoStatus("error");
+          setVideoError(json.error || "Render failed");
           if (pollRef.current) clearInterval(pollRef.current);
         }
       } catch {}
@@ -134,10 +132,11 @@ function SimulatePage() {
     setLoading(true);
     setError("");
     setData(null);
-    setIframeSrc("");
+    setIframeDoc("");
     setP5Code("");
     setVideoUrl(null);
     setVideoStatus(null);
+    setVideoError("");
     if (pollRef.current) clearInterval(pollRef.current);
     try {
       const res = await fetch(`${API}/api/simulate`, {
@@ -247,7 +246,7 @@ function SimulatePage() {
                   </svg>
                 )}
                 {videoStatus === "done" && <span className="w-1.5 h-1.5 rounded-full bg-white/60" />}
-                {videoStatus === "error" && <span className="text-white/20">failed</span>}
+                {videoStatus === "error" && <span className="text-red-400/60 text-xs">failed</span>}
               </button>
               {fixing && (
                 <span className="ml-auto mr-4 text-xs text-white/25 font-mono">auto-fixing sim...</span>
@@ -255,16 +254,16 @@ function SimulatePage() {
             </div>
 
             {/* Simulation iframe — only render when blob URL is ready */}
-            {activeView === "sim" && iframeSrc && (
+            {activeView === "sim" && iframeDoc && (
               <iframe
-                key={iframeSrc}
-                src={iframeSrc}
+                key={simKey}
+                srcDoc={iframeDoc}
                 className="w-full flex-1 border-0"
                 title="Physics Simulation"
                 sandbox="allow-scripts"
               />
             )}
-            {activeView === "sim" && !iframeSrc && (
+            {activeView === "sim" && !iframeDoc && (
               <div className="flex-1 flex items-center justify-center">
                 <svg className="w-5 h-5 animate-spin text-white/20" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -274,6 +273,12 @@ function SimulatePage() {
             )}
 
             {/* Manim video */}
+            {activeView === "video" && videoStatus === "error" && (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8">
+                <p className="text-white/30 text-sm">Manim render failed</p>
+                {videoError && <p className="text-white/20 text-xs font-mono text-center max-w-md">{videoError}</p>}
+              </div>
+            )}
             {activeView === "video" && videoStatus === "done" && videoUrl && (
               <div className="flex-1 flex items-center justify-center bg-black p-4">
                 <video
