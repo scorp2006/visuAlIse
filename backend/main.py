@@ -2,8 +2,8 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from groq import Groq
-import json, os, uuid, traceback
+import google.generativeai as genai
+import json, os, uuid, traceback, time
 from dotenv import load_dotenv
 from prompt import SYSTEM_PROMPT, build_user_prompt, build_p5js_fix_prompt, build_manim_fix_prompt
 from manim_runner import render_manim
@@ -35,17 +35,21 @@ async def global_exception_handler(request, exc):
 # In-memory job store  { job_id: {"status": "pending"|"done"|"error", "url": "...", "error": "..."} }
 jobs: dict = {}
 
-groq_client: Groq | None = None
+gemini_model = None
 
 
-def get_groq():
-    global groq_client
-    if groq_client is None:
-        api_key = os.getenv("GROQ_API_KEY")
+def get_gemini():
+    global gemini_model
+    if gemini_model is None:
+        api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
-        groq_client = Groq(api_key=api_key)
-    return groq_client
+            raise HTTPException(status_code=500, detail="GEMINI_API_KEY not set")
+        genai.configure(api_key=api_key)
+        gemini_model = genai.GenerativeModel(
+            model_name="gemini-3.0-flash",
+            system_instruction=SYSTEM_PROMPT,
+        )
+    return gemini_model
 
 
 # ─── Models ───────────────────────────────────────────────────────────────────
@@ -79,18 +83,45 @@ class JobStatus(BaseModel):
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-def call_groq(messages: list, json_mode: bool = True, max_tokens: int = 8000) -> str:
-    groq = get_groq()
-    kwargs = dict(
-        model="llama-3.3-70b-versatile",
-        messages=messages,
+def call_llm(messages: list, json_mode: bool = True, max_tokens: int = 8000, max_retries: int = 3) -> str:
+    model = get_gemini()
+    # Build prompt from messages (skip system — it's in model system_instruction)
+    parts = []
+    for m in messages:
+        if m["role"] != "system":
+            parts.append(m["content"])
+    prompt = "\n\n".join(parts)
+    config = genai.GenerationConfig(
         temperature=0.2,
-        max_tokens=max_tokens,
+        max_output_tokens=max_tokens,
+        response_mime_type="application/json" if json_mode else "text/plain",
     )
-    if json_mode:
-        kwargs["response_format"] = {"type": "json_object"}
-    completion = groq.chat.completions.create(**kwargs)
-    return completion.choices[0].message.content
+    
+    # Retry logic with exponential backoff for rate limits
+    for attempt in range(max_retries):
+        try:
+            response = model.generate_content(prompt, generation_config=config)
+            return response.text
+        except Exception as e:
+            error_msg = str(e)
+            # Check if it's a rate limit error
+            if "429" in error_msg or "quota" in error_msg.lower() or "rate" in error_msg.lower():
+                if attempt < max_retries - 1:
+                    # Extract wait time from error message if available
+                    wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                    if "retry in" in error_msg.lower():
+                        try:
+                            # Try to extract the suggested wait time
+                            import re
+                            match = re.search(r'retry in (\d+\.?\d*)s', error_msg.lower())
+                            if match:
+                                wait_time = float(match.group(1))
+                        except:
+                            pass
+                    time.sleep(wait_time)
+                    continue
+            # Re-raise if not rate limit or final attempt
+            raise
 
 
 def extract_json(text: str) -> dict:
@@ -121,7 +152,7 @@ async def run_manim_job(job_id: str, manim_code: str, question: str):
                 # Ask LLM to fix the code
                 try:
                     fix_prompt = build_manim_fix_prompt(code, error_msg)
-                    fixed = call_groq(
+                    fixed = call_llm(
                         [{"role": "user", "content": fix_prompt}],
                         json_mode=False,
                         max_tokens=4000,
@@ -145,7 +176,7 @@ async def simulate(req: PhysicsRequest, background_tasks: BackgroundTasks):
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
-    raw = call_groq([
+    raw = call_llm([
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user",   "content": build_user_prompt(req.question)},
     ])
@@ -181,7 +212,7 @@ async def get_video(job_id: str):
 async def fix_p5js(req: FixRequest):
     """Auto-fix broken p5.js code — called by frontend when iframe errors."""
     fix_prompt = build_p5js_fix_prompt(req.code, req.error)
-    fixed = call_groq(
+    fixed = call_llm(
         [{"role": "user", "content": fix_prompt}],
         json_mode=False,
         max_tokens=4000,
@@ -197,10 +228,8 @@ async def fix_p5js(req: FixRequest):
 
 @app.get("/health")
 async def health():
-    api_key = os.getenv("GROQ_API_KEY")
     return {
         "status": "ok",
-        "model": "llama-3.3-70b-versatile",
-        "groq_key_set": bool(api_key),
-        "groq_key_prefix": (api_key[:8] + "...") if api_key else None,
+        "model": "gemini-3.0-flash",
+        "gemini_key_set": bool(os.getenv("GEMINI_API_KEY")),
     }
