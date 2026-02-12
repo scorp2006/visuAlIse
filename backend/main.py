@@ -2,7 +2,7 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import google.generativeai as genai
+from google import genai
 import json, os, uuid, traceback, time, asyncio
 from dotenv import load_dotenv
 from prompt import SYSTEM_PROMPT, build_user_prompt, build_p5js_fix_prompt, build_manim_fix_prompt
@@ -34,22 +34,18 @@ async def global_exception_handler(request, exc):
 # In-memory job store
 jobs: dict = {}
 
-# Global model
-gemini_model = None
+# Global client
+gemini_client = None
 
-def get_model():
-    global gemini_model
-    if gemini_model is None:
+def get_client():
+    global gemini_client
+    if gemini_client is None:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise HTTPException(status_code=500, detail="GEMINI_API_KEY not set")
-        genai.configure(api_key=api_key)
-        # Using gemini-2.0-flash as it is confirmed stable
-        gemini_model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
-            system_instruction=SYSTEM_PROMPT,
-        )
-    return gemini_model
+        # Initialize the modern Google GenAI Client
+        gemini_client = genai.Client(api_key=api_key)
+    return gemini_client
 
 # ─── Models ───────────────────────────────────────────────────────────────────
 
@@ -79,29 +75,32 @@ class JobStatus(BaseModel):
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async def call_llm(messages: list, json_mode: bool = True, max_tokens: int = 8000, max_retries: int = 3) -> str:
-    model = get_model()
+    client = get_client()
     
     # Format prompts: concatenate user messages for simple one-shot
     prompt_text = "\n".join([m["content"] for m in messages if m["role"] == "user"])
     
-    # Config
-    config = genai.GenerationConfig(
-        temperature=0.2,
-        max_output_tokens=max_tokens,
-        response_mime_type="application/json" if json_mode else "text/plain",
-    )
+    # Config per latest SDK docs
+    config = {
+        "temperature": 0.2,
+        "max_output_tokens": max_tokens,
+        "response_mime_type": "application/json" if json_mode else "text/plain",
+        "system_instruction": SYSTEM_PROMPT,
+    }
 
-    # Retry logic
+    # Retry logic with exponential backoff
     for attempt in range(max_retries):
         try:
-            # Async call using the legacy but stable SDK
-            response = await model.generate_content_async(
-                prompt_text, 
-                generation_config=config
+            # Modern async call via .aio attribute
+            response = await client.aio.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents=prompt_text,
+                config=config,
             )
             return response.text
         except Exception as e:
             error_msg = str(e)
+            # Check for 429 or quota errors
             if "429" in error_msg or "quota" in error_msg.lower() or "rate" in error_msg.lower():
                 if attempt < max_retries - 1:
                     wait_time = 2 ** attempt
@@ -140,6 +139,7 @@ async def run_manim_job(job_id: str, manim_code: str, question: str):
                         json_mode=False, 
                         max_tokens=4000
                     )
+                    # Simple regex-like extraction
                     if "```python" in fixed:
                         fixed = fixed.split("```python")[1].split("```")[0]
                     elif "```" in fixed:
@@ -201,7 +201,7 @@ async def fix_p5js(req: FixRequest):
 async def health():
     return {
         "status": "ok",
-        "model": "gemini-2.0-flash",
-        "api": "GOOGLE_GENERATIVEAI",
+        "model": "gemini-3-flash-preview",
+        "api": "GOOGLE_GENAI_SDK",
         "key_set": bool(os.getenv("GEMINI_API_KEY")),
     }

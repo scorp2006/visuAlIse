@@ -66,7 +66,7 @@ def build_manim_fix_prompt(original_code: str, error: str) -> str:
     return f"""Manim error: {error}
 CODE:
 {original_code}
-
+      
 Fix it. Ensure:
 - NO MathTex/Tex (Use Text)
 - PhysicsScene class
