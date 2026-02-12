@@ -2,7 +2,7 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import google.generativeai as genai
+from groq import Groq
 import json, os, uuid, traceback, time
 from dotenv import load_dotenv
 from prompt import SYSTEM_PROMPT, build_user_prompt, build_p5js_fix_prompt, build_manim_fix_prompt
@@ -35,21 +35,17 @@ async def global_exception_handler(request, exc):
 # In-memory job store  { job_id: {"status": "pending"|"done"|"error", "url": "...", "error": "..."} }
 jobs: dict = {}
 
-gemini_model = None
+groq_client = None
 
 
-def get_gemini():
-    global gemini_model
-    if gemini_model is None:
-        api_key = os.getenv("GEMINI_API_KEY")
+def get_groq():
+    global groq_client
+    if groq_client is None:
+        api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
-            raise HTTPException(status_code=500, detail="GEMINI_API_KEY not set")
-        genai.configure(api_key=api_key)
-        gemini_model = genai.GenerativeModel(
-            model_name="gemini-3.0-flash",
-            system_instruction=SYSTEM_PROMPT,
-        )
-    return gemini_model
+            raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
+        groq_client = Groq(api_key=api_key)
+    return groq_client
 
 
 # ─── Models ───────────────────────────────────────────────────────────────────
@@ -84,40 +80,30 @@ class JobStatus(BaseModel):
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def call_llm(messages: list, json_mode: bool = True, max_tokens: int = 8000, max_retries: int = 3) -> str:
-    model = get_gemini()
-    # Build prompt from messages (skip system — it's in model system_instruction)
-    parts = []
+    client = get_groq()
+    
+    # Convert messages to GROQ format
+    groq_messages = []
     for m in messages:
-        if m["role"] != "system":
-            parts.append(m["content"])
-    prompt = "\n\n".join(parts)
-    config = genai.GenerationConfig(
-        temperature=0.2,
-        max_output_tokens=max_tokens,
-        response_mime_type="application/json" if json_mode else "text/plain",
-    )
+        groq_messages.append({"role": m["role"], "content": m["content"]})
     
     # Retry logic with exponential backoff for rate limits
     for attempt in range(max_retries):
         try:
-            response = model.generate_content(prompt, generation_config=config)
-            return response.text
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=groq_messages,
+                temperature=0.2,
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"} if json_mode else {"type": "text"},
+            )
+            return response.choices[0].message.content
         except Exception as e:
             error_msg = str(e)
             # Check if it's a rate limit error
             if "429" in error_msg or "quota" in error_msg.lower() or "rate" in error_msg.lower():
                 if attempt < max_retries - 1:
-                    # Extract wait time from error message if available
                     wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
-                    if "retry in" in error_msg.lower():
-                        try:
-                            # Try to extract the suggested wait time
-                            import re
-                            match = re.search(r'retry in (\d+\.?\d*)s', error_msg.lower())
-                            if match:
-                                wait_time = float(match.group(1))
-                        except:
-                            pass
                     time.sleep(wait_time)
                     continue
             # Re-raise if not rate limit or final attempt
@@ -230,6 +216,7 @@ async def fix_p5js(req: FixRequest):
 async def health():
     return {
         "status": "ok",
-        "model": "gemini-3.0-flash",
-        "gemini_key_set": bool(os.getenv("GEMINI_API_KEY")),
+        "model": "llama-3.3-70b-versatile",
+        "api": "GROQ",
+        "groq_key_set": bool(os.getenv("GROQ_API_KEY")),
     }
