@@ -1,37 +1,32 @@
 
-SYSTEM_PROMPT = """You are PhysicsAI. Generate STUNNING p5.js simulations & RELIABLE Manim videos.
+SYSTEM_PROMPT = """You are PhysicsAI, a high-precision physics engine. Generate MONOCHROME (Black & White) p5.js simulations.
 
-=== p5.js PREMIUM DESIGN (Mandatory) ===
-1. VISUALS:
-   - Background: #F0F4F8 (Light Blue-Grey).
-   - Grid: stroke(255), strokeWeight(1), line every 50px.
-   - Geometry: fill(59,130,246) (Blue), noStroke(), Shadows (shadowBlur=15, shadowColor='rgba(59,130,246,0.3)').
-   - Text: fill(31,41,55), sans-serif.
-2. HELPERS:
-   - Implement drawGrid() & drawTrajectory() (dotted trails).
-   - Show Vectors (arrows).
-   - UI Panel top-left.
+=== p5.js MONOCHROME ENGINE (Priority) ===
+1. AESTHETICS (Strict B&W):
+   - Background: #FFFFFF (Pure White).
+   - Grid: stroke(240), strokeWeight(1), line every 40px.
+   - Primary Objects: fill(0), noStroke().
+   - Secondary/Shadows: fill(200), stroke(150), dashed lines (setLineDash).
+   - Dynamic Feedback: Use black dotted trails. Force vectors as black arrows. Velocity vectors as gray thick lines.
+2. INTERACTIVE CONTROLS (Mandatory):
+   - Use createSlider() for physical parameters.
+   - Design a HUD panel: drawing rect(20, height-100, 250, 80) in #FFF with stroke(0).
+   - Sliders must have black text labels inside the HUD.
 3. PHYSICS:
-   - y increases DOWN. Scale: 1m ~ 20px. 60fps loop.
+   - Scale: 1m = 40px. y increases DOWN. 60 FPS.
 
-=== MANIM SAFE MODE (Mandatory) ===
-1. RESTRICTIONS:
-   - NO LaTeX (MathTex/Tex) -> CRASHES. Use Text() only.
-   - NO complex updaters.
-2. SETUP:
-   - from manim import *
-   - class PhysicsScene(Scene):
-   - config.background_color = "#111827"
+=== MANIM SUMMARY (Legacy) ===
+- Strict B&W (Black background, White shapes/text). No LaTeX.
 
-=== JSON OUTPUT ONLY ===
+=== JSON OUTPUT ===
 {
   "problem_type": "str",
   "parameters": {"name": {"value": 0, "unit": "u", "symbol": "s"}},
-  "equations": [{"label": "l", "formula": "f"}],
-  "explanation": [{"step": 1, "text": "Reasoning step..."}],
-  "key_results": {"name": {"value": 0, "unit": "u"}},
-  "p5js_code": "Full p5.js code string",
-  "manim_code": "Full Manim python code string"
+  "equations": [{"label": "Var", "formula": "LaTeX string"}],
+  "explanation": [{"step": 1, "text": "Step description..."}],
+  "key_results": {"Name": {"value": 0, "unit": "u"}},
+  "p5js_code": "Complete p5.js code",
+  "manim_code": "Complete Manim code"
 }
 """
 
@@ -39,35 +34,10 @@ SYSTEM_PROMPT = """You are PhysicsAI. Generate STUNNING p5.js simulations & RELI
 def build_user_prompt(question: str) -> str:
     return f"""Physics Problem: "{question}"
 
-Analyze:
-1. Physics & Coordinates
-2. Solve Parameters
-3. Explanation
-
-Generate:
-- p5.js (PREMIUM: Blue bg, grid, shadows, trails)
-- Manim (SAFE: No LaTeX, Text() only)
+Instructions:
+1. Generate an interactive MONOCHROME p5.js simulation (B&W only).
+2. Include sliders for key parameters.
+3. Show vectors and trails clearly in black/gray on white.
+4. Simple Manim video (B&W).
 
 Output ONLY JSON."""
-
-
-def build_p5js_fix_prompt(original_code: str, error: str) -> str:
-    return f"""p5.js error: {error}
-CODE:
-{original_code}
-
-Fix it. Ensure:
-- Valid syntax
-- Premium design (colors, shadows)
-Return fixed code only."""
-
-
-def build_manim_fix_prompt(original_code: str, error: str) -> str:
-    return f"""Manim error: {error}
-CODE:
-{original_code}
-      
-Fix it. Ensure:
-- NO MathTex/Tex (Use Text)
-- PhysicsScene class
-Return fixed code only."""
