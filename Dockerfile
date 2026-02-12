@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     fonts-noto \
     fonts-noto-cjk \
     fontconfig \
+    texlive-latex-base \
+    texlive-fonts-recommended \
     && fc-cache -fv \
     && rm -rf /var/lib/apt/lists/*
 
