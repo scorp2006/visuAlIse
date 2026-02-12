@@ -44,9 +44,9 @@ def get_model():
         if not api_key:
             raise HTTPException(status_code=500, detail="GEMINI_API_KEY not set")
         genai.configure(api_key=api_key)
-        # Using gemini-3-flash as requested
+        # Using gemini-2.0-flash as it is confirmed stable
         gemini_model = genai.GenerativeModel(
-            model_name="gemini-3-flash",
+            model_name="gemini-2.0-flash",
             system_instruction=SYSTEM_PROMPT,
         )
     return gemini_model
@@ -201,7 +201,7 @@ async def fix_p5js(req: FixRequest):
 async def health():
     return {
         "status": "ok",
-        "model": "gemini-3-flash",
+        "model": "gemini-2.0-flash",
         "api": "GOOGLE_GENERATIVEAI",
         "key_set": bool(os.getenv("GEMINI_API_KEY")),
     }

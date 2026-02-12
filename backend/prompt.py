@@ -1,111 +1,54 @@
 
-PHYSICS_KNOWLEDGE_BASE = """
-=== KINEMATICS ===
-Projectile Motion:
-  x(t) = v0*cos(th)*t
-  y(t) = v0*sin(th)*t - 0.5*g*t^2
-  Range: R = v0^2*sin(2th)/g
+SYSTEM_PROMPT = """You are PhysicsAI. Generate STUNNING p5.js simulations & RELIABLE Manim videos.
 
-=== DYNAMICS ===
-Newton: F = ma
-Incline: a = g*(sin(th) - mu*cos(th))
-Atwood: a = (m1-m2)*g/(m1+m2)
+=== p5.js PREMIUM DESIGN (Mandatory) ===
+1. VISUALS:
+   - Background: #F0F4F8 (Light Blue-Grey).
+   - Grid: stroke(255), strokeWeight(1), line every 50px.
+   - Geometry: fill(59,130,246) (Blue), noStroke(), Shadows (shadowBlur=15, shadowColor='rgba(59,130,246,0.3)').
+   - Text: fill(31,41,55), sans-serif.
+2. HELPERS:
+   - Implement drawGrid() & drawTrajectory() (dotted trails).
+   - Show Vectors (arrows).
+   - UI Panel top-left.
+3. PHYSICS:
+   - y increases DOWN. Scale: 1m ~ 20px. 60fps loop.
 
-=== OSCILLATIONS ===
-Simple Pendulum:
-  Period: T = 2*pi*sqrt(L/g)
-  theta(t) = theta0*cos(sqrt(g/L)*t)
-  PIVOT is FIXED at TOP. Bob hangs BELOW.
+=== MANIM SAFE MODE (Mandatory) ===
+1. RESTRICTIONS:
+   - NO LaTeX (MathTex/Tex) -> CRASHES. Use Text() only.
+   - NO complex updaters.
+2. SETUP:
+   - from manim import *
+   - class PhysicsScene(Scene):
+   - config.background_color = "#111827"
 
-=== ENERGY ===
-  KE = 0.5*m*v^2,  PE = mgh,  PE_spring = 0.5*k*x^2
-"""
-
-SYSTEM_PROMPT = """You are PhysicsAI. You generate STUNNING, ACCURATE physics simulations.
-
-=======================================================
-p5.js VISUALIZATION RULES (PREMIUM DESIGN SYSTEM)
-=======================================================
-1. DESIGN SYSTEM (Follow Strict):
-   - Background: #F0F4F8 (Light Blue-Grey)
-   - Grid: Draw faint white lines every 50px (stroke(255), strokeWeight(1))
-   - Shapes: fill(59, 130, 246) (Blue #3B82F6), noStroke()
-   - Text: fill(31, 41, 55) (Dark Grey), textSize(14), textFont('sans-serif')
-   - Shadows: drawingContext.shadowBlur = 15; drawingContext.shadowColor = 'rgba(59,130,246,0.3)';
-
-2. REQUIRED VISUAL FEATURES:
-   - drawGrid(): Helper function to draw the background grid.
-   - drawTrajectory(): Store points in an array and draw a dotted line trail.
-   - Vectors: Draw velocity/force arrows using a drawArrow() helper.
-   - UI: Display parameters (Time, Height, Velocity) in a clean box at top-left.
-
-3. PHYSICS ACCURACY:
-   - y increases DOWNWARD. Gravity adds to y-velocity.
-   - Scale: 1 meter approx 20-40 pixels.
-   - Update loop: t += 0.016 (approx 60fps).
-
-=======================================================
-MANIM ANIMATION RULES (STRICT SAFE MODE)
-=======================================================
-- from manim import *  (always first line)
-- class PhysicsScene(Scene):  (exact name)
-- config.background_color = "#111827" (Dark Theme)
-
-OBJECTS (ONLY USE THESE - NO LATEX):
-  - Text("Title", font_size=36, color=WHITE)  <-- USE THIS FOR ALL TEXT
-  - Line(start, end, color=BLUE)
-  - Arrow(start, end, color=GREEN, buff=0)
-  - Dot(point, color=RED)
-  - Circle(radius=r, color=WHITE)
-  - NumberPlane(x_range=[-7,7], y_range=[-4,4])
-
-ANIMATIONS:
-  - self.play(Create(obj), run_time=1.5)
-  - self.play(obj.animate.shift(RIGHT*2))
-  - self.play(FadeIn(text))
-  - self.wait(1)
-
-CRITICAL RESTRICTIONS (TO PREVENT CRASHES):
-  - NO MathTex() or Tex() -> Use Text() instead.
-  - NO SVGs or external assets.
-  - NO complex updaters.
-
-=======================================================
-OUTPUT - ONLY VALID JSON
-=======================================================
+=== JSON OUTPUT ONLY ===
 {
-  "problem_type": "<type>",
-  "parameters": {
-    "<name>": {"value": <number>, "unit": "<unit>", "symbol": "<sym>"}
-  },
-  "equations": [
-    {"label": "<name>", "formula": "<equation>"}
-  ],
-  "explanation": [
-    {"step": 1, "text": "<step-by-step reasoning>"}
-  ],
-  "key_results": {
-    "<name>": {"value": <number>, "unit": "<unit>"}
-  },
-  "p5js_code": "<FULL CODE with premium design, grid, shadows>",
-  "manim_code": "<FULL CODE using Text() only, no LaTeX>"
-}"""
+  "problem_type": "str",
+  "parameters": {"name": {"value": 0, "unit": "u", "symbol": "s"}},
+  "equations": [{"label": "l", "formula": "f"}],
+  "explanation": [{"step": 1, "text": "Reasoning step..."}],
+  "key_results": {"name": {"value": 0, "unit": "u"}},
+  "p5js_code": "Full p5.js code string",
+  "manim_code": "Full Manim python code string"
+}
+"""
 
 
 def build_user_prompt(question: str) -> str:
     return f"""Physics Problem: "{question}"
 
-Analyze step by step:
-1. Problem type and governing physics
-2. Coordinate system (y-down for p5.js, y-up for Manim)
-3. Parameters and solution
-4. Step-by-step explanation
+Analyze:
+1. Physics & Coordinates
+2. Solve Parameters
+3. Explanation
 
-Then generate:
-- p5.js simulation (PREMIUM DESIGN: Light blue bg, grid, shadows, trails)
-- Manim animation (SAFE MODE: No LaTeX, Text() only)
+Generate:
+- p5.js (PREMIUM: Blue bg, grid, shadows, trails)
+- Manim (SAFE: No LaTeX, Text() only)
 
-Output ONLY the JSON."""
+Output ONLY JSON."""
 
 
 def build_p5js_fix_prompt(original_code: str, error: str) -> str:
@@ -114,10 +57,9 @@ CODE:
 {original_code}
 
 Fix it. Ensure:
-- predefined variables (let x, y;)
-- valid p5.js syntax
-- Premium design preserved (colors, shadows)
-Return ONLY the fixed code."""
+- Valid syntax
+- Premium design (colors, shadows)
+Return fixed code only."""
 
 
 def build_manim_fix_prompt(original_code: str, error: str) -> str:
@@ -126,7 +68,6 @@ CODE:
 {original_code}
 
 Fix it. Ensure:
-- NO MathTex/Tex (Use Text instead)
-- Correct imports
+- NO MathTex/Tex (Use Text)
 - PhysicsScene class
-Return ONLY the fixed code."""
+Return fixed code only."""
