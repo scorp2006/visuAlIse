@@ -1,6 +1,8 @@
 fastapi==0.128.8
 uvicorn==0.40.0
-groq
+fastapi==0.128.8
+uvicorn==0.40.0
+google-generativeai
 python-dotenv==1.0.1
 pydantic==2.12.5
 cloudinary==1.41.0
