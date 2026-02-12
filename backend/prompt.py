@@ -41,3 +41,29 @@ Instructions:
 4. Simple Manim video (B&W).
 
 Output ONLY JSON."""
+
+
+def build_p5js_fix_prompt(original_code: str, error: str) -> str:
+    return f"""The following p5.js code threw this error:
+ERROR: {error}
+
+BROKEN CODE:
+{original_code}
+
+Fix the code. Return ONLY the fixed p5.js code, no JSON, no markdown."""
+
+
+def build_manim_fix_prompt(original_code: str, error: str) -> str:
+    return f"""The following Manim code threw this error:
+ERROR: {error}
+
+BROKEN CODE:
+{original_code}
+
+Fix the code. Common fixes:
+- Replace ShowCreation with Create, GrowArrow with Create
+- Replace MathTex/Tex with Text()
+- Fix coordinate arrays to 3 elements: np.array([x, y, 0])
+- Ensure class is named exactly PhysicsScene
+
+Return ONLY the fixed Python Manim code, no JSON, no markdown."""
