@@ -75,10 +75,18 @@ OUTPUT - ONLY VALID JSON
 =======================================================
 {
   "problem_type": "<type>",
-  "parameters": { ... },
-  "equations": [ ... ],
-  "explanation": [ ... ],
-  "key_results": { ... },
+  "parameters": {
+    "<name>": {"value": <number>, "unit": "<unit>", "symbol": "<sym>"}
+  },
+  "equations": [
+    {"label": "<name>", "formula": "<equation>"}
+  ],
+  "explanation": [
+    {"step": 1, "text": "<step-by-step reasoning>"}
+  ],
+  "key_results": {
+    "<name>": {"value": <number>, "unit": "<unit>"}
+  },
   "p5js_code": "<FULL CODE with premium design, grid, shadows>",
   "manim_code": "<FULL CODE using Text() only, no LaTeX>"
 }"""
@@ -91,6 +99,7 @@ Analyze step by step:
 1. Problem type and governing physics
 2. Coordinate system (y-down for p5.js, y-up for Manim)
 3. Parameters and solution
+4. Step-by-step explanation
 
 Then generate:
 - p5.js simulation (PREMIUM DESIGN: Light blue bg, grid, shadows, trails)
