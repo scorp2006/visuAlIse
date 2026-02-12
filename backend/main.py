@@ -2,8 +2,8 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from groq import Groq
-import json, os, uuid, traceback, time
+from google import genai
+import json, os, uuid, traceback, time, asyncio
 from dotenv import load_dotenv
 from prompt import SYSTEM_PROMPT, build_user_prompt, build_p5js_fix_prompt, build_manim_fix_prompt
 from manim_runner import render_manim
@@ -31,34 +31,30 @@ async def global_exception_handler(request, exc):
         content={"detail": str(exc), "type": type(exc).__name__, "trace": tb[-800:]},
     )
 
-
-# In-memory job store  { job_id: {"status": "pending"|"done"|"error", "url": "...", "error": "..."} }
+# In-memory job store
 jobs: dict = {}
 
-groq_client = None
+# Global client
+gemini_client = None
 
-
-def get_groq():
-    global groq_client
-    if groq_client is None:
-        api_key = os.getenv("GROQ_API_KEY")
+def get_client():
+    global gemini_client
+    if gemini_client is None:
+        api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
-        groq_client = Groq(api_key=api_key)
-    return groq_client
-
+            raise HTTPException(status_code=500, detail="GEMINI_API_KEY not set")
+        gemini_client = genai.Client(api_key=api_key)
+    return gemini_client
 
 # ─── Models ───────────────────────────────────────────────────────────────────
 
 class PhysicsRequest(BaseModel):
     question: str
 
-
 class FixRequest(BaseModel):
     code: str
     error: str
-    code_type: str  # "p5js" or "manim"
-
+    code_type: str 
 
 class PhysicsResponse(BaseModel):
     problem_type: str
@@ -70,45 +66,46 @@ class PhysicsResponse(BaseModel):
     manim_code: str
     job_id: str
 
-
 class JobStatus(BaseModel):
     status: str
     url: str | None = None
     error: str | None = None
 
-
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-def call_llm(messages: list, json_mode: bool = True, max_tokens: int = 8000, max_retries: int = 3) -> str:
-    client = get_groq()
+async def call_llm(messages: list, json_mode: bool = True, max_tokens: int = 8000, max_retries: int = 3) -> str:
+    client = get_client()
     
-    # Convert messages to GROQ format
-    groq_messages = []
-    for m in messages:
-        groq_messages.append({"role": m["role"], "content": m["content"]})
+    # Format prompts: concatenate user messages for simple one-shot
+    prompt_text = "\n".join([m["content"] for m in messages if m["role"] == "user"])
     
-    # Retry logic with exponential backoff for rate limits
+    # Config
+    config = {
+        "temperature": 0.2,
+        "max_output_tokens": max_tokens,
+        "response_mime_type": "application/json" if json_mode else "text/plain",
+        "system_instruction": SYSTEM_PROMPT,
+    }
+
+    # Retry logic
     for attempt in range(max_retries):
         try:
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=groq_messages,
-                temperature=0.2,
-                max_tokens=max_tokens,
-                response_format={"type": "json_object"} if json_mode else {"type": "text"},
+            # Modern async call with Gemini 3 Flash
+            response = await client.aio.models.generate_content(
+                model="gemini-3-flash",
+                contents=prompt_text,
+                config=config,
             )
-            return response.choices[0].message.content
+            return response.text
         except Exception as e:
             error_msg = str(e)
-            # Check if it's a rate limit error
             if "429" in error_msg or "quota" in error_msg.lower() or "rate" in error_msg.lower():
                 if attempt < max_retries - 1:
-                    wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
-                    time.sleep(wait_time)
+                    wait_time = 2 ** attempt
+                    await asyncio.sleep(wait_time) # proper async sleep
                     continue
-            # Re-raise if not rate limit or final attempt
             raise
-
+    return ""
 
 def extract_json(text: str) -> dict:
     text = text.strip()
@@ -121,9 +118,7 @@ def extract_json(text: str) -> dict:
         raise ValueError("No JSON in response")
     return json.loads(text[start:end])
 
-
 async def run_manim_job(job_id: str, manim_code: str, question: str):
-    """Background task: render Manim, retry once on failure."""
     jobs[job_id] = {"status": "pending"}
     code = manim_code
 
@@ -135,25 +130,22 @@ async def run_manim_job(job_id: str, manim_code: str, question: str):
         except RuntimeError as e:
             error_msg = str(e)
             if attempt < 2:
-                # Ask LLM to fix the code
                 try:
                     fix_prompt = build_manim_fix_prompt(code, error_msg)
-                    fixed = call_llm(
-                        [{"role": "user", "content": fix_prompt}],
-                        json_mode=False,
-                        max_tokens=4000,
+                    fixed = await call_llm(
+                        [{"role": "user", "content": fix_prompt}], 
+                        json_mode=False, 
+                        max_tokens=4000
                     )
-                    # Extract code block if wrapped in markdown
                     if "```python" in fixed:
                         fixed = fixed.split("```python")[1].split("```")[0]
                     elif "```" in fixed:
                         fixed = fixed.split("```")[1].split("```")[0]
                     code = fixed.strip()
-                except Exception:
-                    pass  # Use same code for next attempt
+                except:
+                    pass
             else:
                 jobs[job_id] = {"status": "error", "error": error_msg[:500]}
-
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
@@ -162,46 +154,37 @@ async def simulate(req: PhysicsRequest, background_tasks: BackgroundTasks):
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
-    raw = call_llm([
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user",   "content": build_user_prompt(req.question)},
+    raw = await call_llm([
+        {"role": "user", "content": build_user_prompt(req.question)},
     ])
 
     data = extract_json(raw)
-
-    required = ["problem_type", "parameters", "equations", "explanation",
-                "key_results", "p5js_code", "manim_code"]
+    
+    # Validation
+    required = ["problem_type", "parameters", "equations", "explanation", "key_results", "p5js_code", "manim_code"]
     missing = [f for f in required if f not in data]
     if missing:
-        raise HTTPException(status_code=500, detail=f"LLM missing fields: {missing}")
+         raise HTTPException(status_code=500, detail=f"LLM missing fields: {missing}")
 
     job_id = str(uuid.uuid4())
-    jobs[job_id] = {"status": "pending"}  # pre-register so polling never gets 404
+    jobs[job_id] = {"status": "pending"}
     background_tasks.add_task(run_manim_job, job_id, data["manim_code"], req.question)
 
     return PhysicsResponse(**data, job_id=job_id)
-
 
 @app.get("/api/video/{job_id}", response_model=JobStatus)
 async def get_video(job_id: str):
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job not found")
     job = jobs[job_id]
-    return JobStatus(
-        status=job["status"],
-        url=job.get("url"),
-        error=job.get("error"),
-    )
-
+    return JobStatus(**job)
 
 @app.post("/api/fix-p5js")
 async def fix_p5js(req: FixRequest):
-    """Auto-fix broken p5.js code — called by frontend when iframe errors."""
     fix_prompt = build_p5js_fix_prompt(req.code, req.error)
-    fixed = call_llm(
-        [{"role": "user", "content": fix_prompt}],
-        json_mode=False,
-        max_tokens=4000,
+    fixed = await call_llm(
+        [{"role": "user", "content": fix_prompt}], 
+        json_mode=False
     )
     if "```javascript" in fixed:
         fixed = fixed.split("```javascript")[1].split("```")[0]
@@ -211,12 +194,11 @@ async def fix_p5js(req: FixRequest):
         fixed = fixed.split("```")[1].split("```")[0]
     return {"p5js_code": fixed.strip()}
 
-
 @app.get("/health")
 async def health():
     return {
         "status": "ok",
-        "model": "llama-3.3-70b-versatile",
-        "api": "GROQ",
-        "groq_key_set": bool(os.getenv("GROQ_API_KEY")),
+        "model": "gemini-3-flash",
+        "api": "GOOGLE_GENAI_SDK",
+        "key_set": bool(os.getenv("GEMINI_API_KEY")),
     }
